@@ -3,12 +3,6 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-        Customer newCustomer = new Customer();
-
-        Scanner scan = new Scanner(System.in);
-
-        int id = scan.nextInt();
-
-        newCustomer.getCustomerInfo(id);
+        Customer newCustomer = new Customer("Michael", "Douglas", "111-11-111", "1999-11-25");
     }
 }
