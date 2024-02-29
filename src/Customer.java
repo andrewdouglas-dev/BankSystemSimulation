@@ -1,28 +1,36 @@
 import java.sql.*;
+import java.util.Random;
 
 public class Customer {
     private String url = "jdbc:mysql://localhost:3306/Bank";
     private String user = "BankUser";
     private String pass = "Password123";
-    private int currentID = 1;
 
     public Customer() {
     }
 
-    public Customer(String firstName, String lastName, String SSN, String DOB) {
+    public void addNewCustomer(String firstName, String lastName, String SSN, String DOB) {
+        Random rand = new Random();
+        int number = rand.nextInt(999999);
+        String CustomerID = String.format("%06d", number);
+
         try {
             Connection connection = DriverManager.getConnection(url, user, pass);
 
             Statement statement = connection.createStatement();
 
-            String insert = "INSERT INTO Bank.Customer VALUES (" + currentID + ", '" + firstName + "', '" + lastName + "', '" + SSN + "', '" + DOB + "');";
+            String insert = "INSERT INTO Bank.Customer VALUES (" + CustomerID + ", '" + firstName + "', '" + lastName + "', '" + SSN + "', '" + DOB + "');";
+
             statement.executeUpdate(insert);
 
-            currentID++;
+            System.out.println("Successfully added " + CustomerID + " to the Customer Database.");
 
         } catch (SQLIntegrityConstraintViolationException e1) {
             if (e1.getMessage().contains("SSN_UNIQUE")) {
                 System.out.println("Customer already exists with provided Social Security Number, please double check before retry.");
+                return;
+            } else if (e1.getMessage().contains("PRIMARY")) {
+                addNewCustomer(firstName, lastName, SSN, DOB);
                 return;
             }
             e1.printStackTrace();
@@ -32,17 +40,72 @@ public class Customer {
         }
     }
 
+    public void deleteCustomer(String CustomerID) {
+        try {
+            Connection connection = DriverManager.getConnection(url, user, pass);
+
+            Statement statement = connection.createStatement();
+
+            String delete = "Delete FROM Bank.Customer WHERE customerID = '" + CustomerID + "';";
+
+            statement.executeUpdate(delete);
+
+            System.out.println("Successfully deleted " + CustomerID + " from the Customer Database.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("There was a problem with this function");
+        }
+    }
+
+    public void updateCustomerFirstName(int customerID, String firstName) {
+        try {
+            Connection connection = DriverManager.getConnection(url, user, pass);
+
+            Statement statement = connection.createStatement();
+
+            String update = "Update Bank.Customer SET firstName = '" + firstName + "' WHERE customerID = '" + customerID + "';";
+
+            statement.executeUpdate(update);
+
+            System.out.println("Successfully updated " + customerID + " first name in the Customer Database.");
+
+        } catch (Exception e) {
+            System.out.println("There was a problem with this function");
+            e.getStackTrace();
+        }
+    }
+
+    public void updateCustomerLastName(int customerID, String lastName) {
+        try {
+            Connection connection = DriverManager.getConnection(url, user, pass);
+
+            Statement statement = connection.createStatement();
+
+            String update = "Update Bank.Customer SET lastName = '" + lastName + "' WHERE customerID = '" + customerID + "';";
+
+            statement.executeUpdate(update);
+
+            System.out.println("Successfully updated " + customerID + " last name in the Customer Database.");
+
+        } catch (Exception e) {
+            System.out.println("There was a problem with this function");
+            e.getStackTrace();
+        }
+    }
+
     public void getCustomerInfoByID(int customerID) {
         try {
             Connection connection = DriverManager.getConnection(url, user, pass);
 
             Statement statement = connection.createStatement();
 
-            String query = "Select * FROM Bank.Customer WHERE customerID = " + customerID + ";";
+            String query = "Select * FROM Bank.Customer WHERE customerID = '" + customerID + "';";
 
             ResultSet select = statement.executeQuery(query);
 
             while (select.next()) {
+                System.out.println("Customer Information:");
                 System.out.println("Customer ID: " + select.getString("customerID") + " | First Name: " + select.getString("firstName") + " | Last Name: " + select.getString("lastName") + " | SSN: " + select.getString("SSN") + " | DOB: " + select.getString("DOB"));
                 return;
             }
@@ -65,6 +128,7 @@ public class Customer {
             ResultSet select = statement.executeQuery(query);
 
             while (select.next()) {
+                System.out.println("Customer Information:");
                 System.out.println("Customer ID: " + select.getString("customerID") + " | First Name: " + select.getString("firstName") + " | Last Name: " + select.getString("lastName") + " | SSN: " + select.getString("SSN") + " | DOB: " + select.getString("DOB"));
                 return;
             }
