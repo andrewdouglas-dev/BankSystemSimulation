@@ -1,5 +1,4 @@
 import java.sql.*;
-import java.util.Random;
 
 public class Customer {
     private String url = "jdbc:mysql://localhost:3306/Bank";
@@ -10,27 +9,21 @@ public class Customer {
     }
 
     public void addNewCustomer(String firstName, String lastName, String SSN, String DOB) {
-        Random rand = new Random();
-        int number = rand.nextInt(999999);
-        String CustomerID = String.format("%06d", number);
 
         try {
             Connection connection = DriverManager.getConnection(url, user, pass);
 
             Statement statement = connection.createStatement();
 
-            String insert = "INSERT INTO Bank.Customer VALUES (" + CustomerID + ", '" + firstName + "', '" + lastName + "', '" + SSN + "', '" + DOB + "');";
+            String insert = "INSERT INTO Bank.Customer (`firstName`, `lastName`, `SSN`, `DOB`) VALUES ('" + firstName + "', '" + lastName + "', '" + SSN + "', '" + DOB + "');";
 
             statement.executeUpdate(insert);
 
-            System.out.println("Successfully added " + CustomerID + " to the Customer Database.");
+            System.out.println("Successfully added " + firstName + " " + lastName + " to the Customer Database.");
 
         } catch (SQLIntegrityConstraintViolationException e1) {
             if (e1.getMessage().contains("SSN_UNIQUE")) {
                 System.out.println("Customer already exists with provided Social Security Number, please double check before retry.");
-                return;
-            } else if (e1.getMessage().contains("PRIMARY")) {
-                addNewCustomer(firstName, lastName, SSN, DOB);
                 return;
             }
             e1.printStackTrace();
@@ -40,17 +33,22 @@ public class Customer {
         }
     }
 
-    public void deleteCustomer(String CustomerID) {
+    public void deleteCustomer(String customerID) {
+        if (!customerExists(customerID)) {
+            System.out.println("Provided CustomerID is invalid.");
+            return;
+        }
+
         try {
             Connection connection = DriverManager.getConnection(url, user, pass);
 
             Statement statement = connection.createStatement();
 
-            String delete = "Delete FROM Bank.Customer WHERE customerID = '" + CustomerID + "';";
+            String delete = "Delete FROM Bank.Customer WHERE customerID = '" + customerID + "';";
 
             statement.executeUpdate(delete);
 
-            System.out.println("Successfully deleted " + CustomerID + " from the Customer Database.");
+            System.out.println("Successfully deleted " + customerID + " from the Customer Database.");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -58,7 +56,12 @@ public class Customer {
         }
     }
 
-    public void updateCustomerFirstName(int customerID, String firstName) {
+    public void updateCustomerFirstName(String customerID, String firstName) {
+        if (!customerExists(customerID)) {
+            System.out.println("Provided CustomerID is invalid.");
+            return;
+        }
+
         try {
             Connection connection = DriverManager.getConnection(url, user, pass);
 
@@ -76,7 +79,12 @@ public class Customer {
         }
     }
 
-    public void updateCustomerLastName(int customerID, String lastName) {
+    public void updateCustomerLastName(String customerID, String lastName) {
+        if (!customerExists(customerID)) {
+            System.out.println("Provided CustomerID is invalid.");
+            return;
+        }
+
         try {
             Connection connection = DriverManager.getConnection(url, user, pass);
 
@@ -94,7 +102,12 @@ public class Customer {
         }
     }
 
-    public void getCustomerInfoByID(int customerID) {
+    public void getCustomerInfoByID(String customerID) {
+        if (!customerExists(customerID)) {
+            System.out.println("Provided CustomerID is invalid.");
+            return;
+        }
+
         try {
             Connection connection = DriverManager.getConnection(url, user, pass);
 
@@ -138,5 +151,27 @@ public class Customer {
             System.out.println("There was a problem with this function");
             e.getStackTrace();
         }
+    }
+
+    public boolean customerExists(String customerID) {
+        try {
+            Connection connection = DriverManager.getConnection(url, user, pass);
+
+            Statement statement = connection.createStatement();
+
+            String query = "Select * FROM Bank.Customer WHERE customerID = '" + customerID + "';";
+
+            ResultSet select = statement.executeQuery(query);
+
+            while (select.next()) {
+                return true;
+            }
+
+        } catch (Exception e) {
+            System.out.println("There was a problem with this function");
+            e.getStackTrace();
+        }
+
+        return false;
     }
 }
