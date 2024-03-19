@@ -9,15 +9,13 @@ public class Account {
     }
 
     public void createAccount(String customerID, String accType) {
-
-        Customer customer = new Customer();
-        if (!customer.customerExists(customerID)) {
-            System.out.println("Provided CustomerID does not exist in the Customer Database. To create an Account first create create new customer.");
+        if (!accType.equals("Chk") && !accType.equals("Sav")) {
+            System.out.println("Please enter valid account type.");
             return;
         }
 
-        if (!accType.equals("Chk") && !accType.equals("Sav")) {
-            System.out.println("Please enter valid account type.");
+        if (!customerExists(customerID)) {
+            System.out.println("To create an Account first create create new customer.");
             return;
         }
 
@@ -39,9 +37,7 @@ public class Account {
     }
 
     public void getAllAccountByCustomer(String customerID) {
-        Customer customer = new Customer();
-        if (!customer.customerExists(customerID)) {
-            System.out.println("Provided CustomerID is invalid.");
+        if (!customerExists(customerID)) {
             return;
         }
 
@@ -65,9 +61,7 @@ public class Account {
     }
 
     public void getAllCheckingAccountsByCustomer(String customerID) {
-        Customer customer = new Customer();
-        if (!customer.customerExists(customerID)) {
-            System.out.println("Provided CustomerID is invalid.");
+        if (!customerExists(customerID)) {
             return;
         }
 
@@ -91,9 +85,7 @@ public class Account {
     }
 
     public void getAllSavingsAccountsByCustomer(String customerID) {
-        Customer customer = new Customer();
-        if (!customer.customerExists(customerID)) {
-            System.out.println("Provided CustomerID is invalid.");
+        if (!customerExists(customerID)) {
             return;
         }
 
@@ -167,9 +159,7 @@ public class Account {
     }
 
     public boolean accountExists(String customerID, String accountID) {
-        Customer customer = new Customer();
-        if (!customer.customerExists(customerID)) {
-            System.out.println("Provided CustomerID does not exist in the Customer Database, and therefore has no associated accounts.");
+        if (!customerExists(customerID)) {
             return false;
         }
 
@@ -193,6 +183,16 @@ public class Account {
         System.out.println("No Account found with provided Account ID.");
         return false;
     }
+
+    public boolean customerExists(String customerID) {
+        Customer customer = new Customer();
+        if (!customer.customerExists(customerID)) {
+            System.out.println("Provided CustomerID does not exist in the Customer Database, and therefore has no associated accounts.");
+            return false;
+        }
+        return true;
+    }
+
 
     public void deleteAccount(String customerID, String accountID) {
         if (!accountExists(customerID, accountID)) {
