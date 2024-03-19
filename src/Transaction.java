@@ -94,4 +94,26 @@ public class Transaction {
             Deposit(CustomerID, depositAccountID, transferAmount);
         }
     }
+
+    public void Transfer(String fromCustomerID, String toCustomerID, String withdrawalAccountID, String depositAccountID, float transferAmount) {
+        //Check if both Withdrawal and Deposit Accounts exist
+        Account acc = new Account();
+        if (!acc.accountExists(fromCustomerID,withdrawalAccountID)) {
+            System.out.println("Withdrawal Account not found, Transfer FAILED.");
+            return;
+        }
+        if (!acc.accountExists(toCustomerID, depositAccountID)) {
+            System.out.println("Deposit Account not found, Transfer FAILED.");
+            return;
+        }
+
+        //Process Transfer because Accounts exists and verified
+        int withdrawalOutcome = Withdrawal(fromCustomerID, withdrawalAccountID, transferAmount);
+
+        if (withdrawalOutcome == 1 || withdrawalOutcome == 2 || withdrawalOutcome == 4) {
+            return;
+        } else {
+            Deposit(toCustomerID, depositAccountID, transferAmount);
+        }
+    }
 }
