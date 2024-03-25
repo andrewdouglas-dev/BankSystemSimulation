@@ -1,45 +1,28 @@
-import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Transaction {
-    private String url = "jdbc:mysql://localhost:3306/Bank";
-    private String user = "BankUser";
-    private String pass = "Password123";
+    Account account;
+    DBConnection dbConnection;
 
-    public Transaction() {
+    public Transaction(Account acc) {
+        account = acc;
+        dbConnection = new DBConnection();
     }
 
-    public void Deposit(String CustomerID, String accountID, float amount) {
-        Account acc = new Account();
-
-        if (!acc.accountExists(CustomerID, accountID)) {
-            System.out.println("No Account found with provided Customer ID and Account ID");
-            return;
-        }
+    public void Deposit(float amount) {
 
         DateTimeFormatter formatterLocalDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String dateTime = formatterLocalDateTime.format(LocalDateTime.now());
 
         try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-            Statement statement = connection.createStatement();
-
-
             //Add transaction to Transaction DB
-            String insert = "INSERT INTO Bank.Transactions (`accountID`, `amount`, `Date`, `type`) VALUES ('" + accountID + "', '" + amount + "', '" + dateTime + "', 'Deposit');";
-
-            statement.executeUpdate(insert);
-
+            dbConnection.insert("Transactions","(`accountID`, `amount`, `Date`, `type`)", "('" + account.accountID + "', '" + amount + "', '" + dateTime + "', 'Deposit')");
 
             //Update Account Balance in Accounts DB
-            float bal = acc.getAccountBalance(CustomerID, accountID);
+            account.updateBalance(amount);
 
-            String update = "Update Bank.Accounts SET Balance = '" + (bal+amount) + "' WHERE accountID = '" + accountID + "';";
-
-            statement.executeUpdate(update);
-
-            System.out.println("Successfully deposited to Account: " + accountID + ". New balance is: " + acc.getAccountBalance(CustomerID, accountID));
+            System.out.println("Successfully deposited to Account: " + account.accountID + ". New balance is: " + account.balance);
 
         } catch (Exception e) {
             System.out.println("There was a problem with this function");
@@ -47,15 +30,8 @@ public class Transaction {
         }
     }
 
-    public int Withdrawal(String CustomerID, String accountID, float amount) {
-        Account acc = new Account();
-
-        if (!acc.accountExists(CustomerID, accountID)) {
-            System.out.println("No Account found with provided Customer ID and Account ID");
-            return 1;
-        }
-
-        float bal = acc.getAccountBalance(CustomerID, accountID);
+    public int Withdrawal(float amount) {
+        float bal = account.getAccountBalance();
 
         if (bal < amount) {
             System.out.println("Insufficient funds, transaction not processed.");
@@ -68,23 +44,15 @@ public class Transaction {
 
 
         try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-            Statement statement = connection.createStatement();
-
-            float transactionAmount = (float)-amount;
+            float amt = -amount;
 
             //Add transaction to Transaction DB
-            String insert = "INSERT INTO Bank.Transactions (`accountID`, `amount`, `Date`, `type`) VALUES ('" + accountID + "', '" + transactionAmount + "', '" + dateTime + "', 'Withdrawal');";
-
-            statement.executeUpdate(insert);
-
+            dbConnection.insert("Transactions","(`accountID`, `amount`, `Date`, `type`)", "('" + account.accountID + "', '" + amt + "', '" + dateTime + "', 'Withdrawal')");
 
             //Update Account Balance in Accounts DB
-            String update = "Update Bank.Accounts SET Balance = '" + (bal-amount) + "' WHERE accountID = '" + accountID + "';";
+            account.updateBalance(amt);
 
-            statement.executeUpdate(update);
-
-            System.out.println("Successfully withdrew " + amount + " from Account: " + accountID + " balance. New balance is: " + acc.getAccountBalance(CustomerID, accountID));
+            System.out.println("Successfully withdrew " + amount + " from Account: " + account.accountID + " balance. New balance is: " + account.balance);
 
             return 3;
 
@@ -96,47 +64,13 @@ public class Transaction {
         return 4;
     }
 
-    public void Transfer(String CustomerID, String withdrawalAccountID, String depositAccountID, float transferAmount) {
+    public void Transfer(Account accToTransferTo, float transferAmount) {
         //Check if both Withdrawal and Deposit Accounts exist
-        Account acc = new Account();
-        if (!acc.accountExists(CustomerID,withdrawalAccountID)) {
-            System.out.println("Withdrawal Account not found, Transfer FAILED.");
-            return;
-        }
-        if (!acc.accountExists(CustomerID, depositAccountID)) {
-            System.out.println("Deposit Account not found, Transfer FAILED.");
+        if (Withdrawal(transferAmount) != 3) {
             return;
         }
 
-        //Process Transfer because Accounts exists and verified
-        int withdrawalOutcome = Withdrawal(CustomerID, withdrawalAccountID, transferAmount);
-
-        if (withdrawalOutcome == 1 || withdrawalOutcome == 2 || withdrawalOutcome == 4) {
-            return;
-        } else {
-            Deposit(CustomerID, depositAccountID, transferAmount);
-        }
-    }
-
-    public void Transfer(String fromCustomerID, String toCustomerID, String withdrawalAccountID, String depositAccountID, float transferAmount) {
-        //Check if both Withdrawal and Deposit Accounts exist
-        Account acc = new Account();
-        if (!acc.accountExists(fromCustomerID,withdrawalAccountID)) {
-            System.out.println("Withdrawal Account not found, Transfer FAILED.");
-            return;
-        }
-        if (!acc.accountExists(toCustomerID, depositAccountID)) {
-            System.out.println("Deposit Account not found, Transfer FAILED.");
-            return;
-        }
-
-        //Process Transfer because Accounts exists and verified
-        int withdrawalOutcome = Withdrawal(fromCustomerID, withdrawalAccountID, transferAmount);
-
-        if (withdrawalOutcome == 1 || withdrawalOutcome == 2 || withdrawalOutcome == 4) {
-            return;
-        } else {
-            Deposit(toCustomerID, depositAccountID, transferAmount);
-        }
+        Transaction depositTrans = new Transaction(accToTransferTo);
+        depositTrans.Deposit(transferAmount);
     }
 }

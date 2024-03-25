@@ -1,218 +1,85 @@
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Account {
-    private String url = "jdbc:mysql://localhost:3306/Bank";
-    private String user = "BankUser";
-    private String pass = "Password123";
+    DBConnection dbConnection;
+    Customer customer;
+    String accountID;
+    String accountType;
+    String createDateTime;
+    Float balance;
 
-    public Account() {
-    }
 
-    public void createAccount(String customerID, String accType) {
-        if (!accType.equals("Chk") && !accType.equals("Sav")) {
-            System.out.println("Please enter valid account type.");
-            return;
-        }
+    public Account(Customer cus, String accID) {
+        dbConnection = new DBConnection();
+        customer = cus;
+        accountID = accID;
 
-        if (!customerExists(customerID)) {
-            System.out.println("To create an Account first create create new customer.");
-            return;
-        }
+        ResultSet rs = dbConnection.select("Accounts", "AccountID = '" + accountID + "' and customerSSN = '" + customer.SSN + "'");
 
         try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String insert = "INSERT INTO Bank.Accounts (`customerID`, `createDate`, `AccountType`,`Balance`) VALUES ('" + customerID + "', '" + java.time.LocalDate.now() + "', '" + accType + "', '" + 0.00 + "');";
-
-            statement.executeUpdate(insert);
-
-            System.out.println("Successfully added new account for Customer ID: " + customerID + " to the Account Database.");
-
-        } catch (Exception e) {
-            System.out.println("There was an error performing this operation");
-            e.printStackTrace();
-        }
-    }
-
-    public void getAllAccountByCustomer(String customerID) {
-        if (!customerExists(customerID)) {
-            return;
-        }
-
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Accounts WHERE customerID = '" + customerID + "';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            System.out.println("Account Information:");
-
-            while (select.next()) {
-                System.out.println("Account ID: " + select.getString("AccountID") + " | Customer ID: " + select.getString("customerID") + " | Account Create Date: " + select.getString("createDate") + " | Account Type: " + select.getString("AccountType") + " | Account Balance: " + select.getString("Balance"));
-            }
-        } catch (Exception e) {
-            System.out.println("There was an error with that operation");
-        }
-    }
-
-    public void getAllCheckingAccountsByCustomer(String customerID) {
-        if (!customerExists(customerID)) {
-            return;
-        }
-
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Accounts WHERE customerID = '" + customerID + "' AND AccountType = 'Chk';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            System.out.println("Account Information:");
-
-            while (select.next()) {
-                System.out.println("Account ID: " + select.getString("AccountID") + " | Customer ID: " + select.getString("customerID") + " | Account Create Date: " + select.getString("createDate") + " | Account Type: " + select.getString("AccountType") + " | Account Balance: " + select.getString("Balance"));
-            }
-        } catch (Exception e) {
-            System.out.println("There was an error with that operation");
-        }
-    }
-
-    public void getAllSavingsAccountsByCustomer(String customerID) {
-        if (!customerExists(customerID)) {
-            return;
-        }
-
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Accounts WHERE customerID = '" + customerID + "' AND AccountType = 'Sav';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            System.out.println("Account Information:");
-
-            while (select.next()) {
-                System.out.println("Account ID: " + select.getString("AccountID") + " | Customer ID: " + select.getString("customerID") + " | Account Create Date: " + select.getString("createDate") + " | Account Type: " + select.getString("AccountType") + " | Account Balance: " + select.getString("Balance"));
-            }
-        } catch (Exception e) {
-            System.out.println("There was an error with that operation");
-        }
-    }
-
-    public void getAccountDetails(String customerID, String accountID) {
-        if (!accountExists(customerID, accountID)) {
-            return;
-        }
-
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Accounts WHERE customerID = '" + customerID + "' AND accountID = '" + accountID + "';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            while (select.next()) {
-                System.out.println("Account Information:");
-                System.out.println("Account ID: " + select.getString("AccountID") + " | Customer ID: " + select.getString("customerID") + " | Account Create Date: " + select.getString("createDate") + " | Account Type: " + select.getString("AccountType") + " | Account Balance: " + select.getString("Balance"));
+            if (rs == null) {
                 return;
             }
 
-        } catch (Exception e) {
-            System.out.println("There was an error performing this operation");
-        }
-    }
-
-    public float getAccountBalance(String customerID, String accountID) {
-        if (!accountExists(customerID,accountID)) {
-            return (float) -.555;
-        }
-
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Accounts WHERE customerID = '" + customerID + "' AND accountID = '" + accountID + "';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            while (select.next()) {
-                return select.getFloat("Balance");
+            if (rs.next()) {
+                createDateTime = rs.getString("createDateTime");
+                balance = rs.getFloat("Balance");
+                accountType = rs.getString("AccountType");
             }
-
-        } catch (Exception e) {
-            System.out.println("There was an error performing this operation");
-        }
-
-        return (float) -.555;
-    }
-
-    public boolean accountExists(String customerID, String accountID) {
-        if (!customerExists(customerID)) {
-            return false;
-        }
-
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Accounts WHERE customerID = '" + customerID + "' AND accountID = '" + accountID + "';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            while (select.next()) {
-                return true;
-            }
-
-        } catch (Exception e) {
-            System.out.println("There was an error performing this operation");
-        }
-
-        System.out.println("No Account found with provided Account ID.");
-        return false;
-    }
-
-    public boolean customerExists(String customerID) {
-        Customer customer = new Customer();
-        if (!customer.customerExists(customerID)) {
-            System.out.println("Provided CustomerID does not exist in the Customer Database, and therefore has no associated accounts.");
-            return false;
-        }
-        return true;
-    }
-
-
-    public void deleteAccount(String customerID, String accountID) {
-        if (!accountExists(customerID, accountID)) {
-            return;
-        }
-
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String delete = "Delete FROM Bank.Accounts WHERE accountID = '" + accountID + "';";
-
-            statement.executeUpdate(delete);
-
-            System.out.println("Successfully deleted " + accountID + " from the Accounts Database.");
-
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("There was a problem with this function");
         }
+    }
+
+    public Account(Customer cus, String accType, float bal){
+        dbConnection = new DBConnection();
+
+        DateTimeFormatter formatterLocalDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String dateTime = formatterLocalDateTime.format(LocalDateTime.now());
+
+        customer = cus;
+        createDateTime = dateTime;
+        balance = bal;
+        accountType = accType;
+
+        try {
+            dbConnection.insert("Accounts", "(`customerSSN`, `createDateTime`, `AccountType`, `Balance`)", "('" + customer.SSN + "', '" + dateTime + "', '" + accType + "', '" + 0.00 + "')");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        ResultSet rs = dbConnection.select("Accounts", "customerSSN = '" + customer.SSN + "' and createDateTime = '" + dateTime + "'");
+
+        try {
+            if (rs.next()) {
+                accountID = rs.getString("AccountID");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getAccountDetails() {
+        System.out.println(accountID + " | " + customer.SSN + " | " + createDateTime + " | " + accountType + " | " + balance);
+    }
+
+    public float getAccountBalance() {
+        return balance;
+    }
+
+    public void updateBalance(float updateVal) {
+        balance = balance + updateVal;
+        dbConnection.update("Accounts", "Balance = " + balance, "accountID = '" + accountID + "' and customerSSN = '" + customer.SSN + "'");
+    }
+
+    public boolean accountExists() {
+        return dbConnection.exists("Accounts", "accountID = '" + accountID + "' and customerSSN = '" + customer.SSN + "'");
+    }
+
+
+    public void deleteAccount() {
+        dbConnection.delete("Accounts", "accountID = '" + accountID + "' and customerSSN = '" + customer.SSN + "'");
     }
 }

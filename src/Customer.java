@@ -1,177 +1,109 @@
 import java.sql.*;
 
 public class Customer {
-    private String url = "jdbc:mysql://localhost:3306/Bank";
-    private String user = "BankUser";
-    private String pass = "Password123";
+    DBConnection dbConnection;
+    String fname;
+    String lname;
+    String SSN;
+    String DOB;
 
-    public Customer() {
-    }
-
-    public void addNewCustomer(String firstName, String lastName, String SSN, String DOB) {
+    public Customer(String searchValue) {
+        dbConnection = new DBConnection();
+        ResultSet rs = dbConnection.select("Customer", "SSN = '" + searchValue + "'");
 
         try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String insert = "INSERT INTO Bank.Customer (`firstName`, `lastName`, `SSN`, `DOB`) VALUES ('" + firstName + "', '" + lastName + "', '" + SSN + "', '" + DOB + "');";
-
-            statement.executeUpdate(insert);
-
-            System.out.println("Successfully added " + firstName + " " + lastName + " to the Customer Database.");
-
-        } catch (SQLIntegrityConstraintViolationException e1) {
-            if (e1.getMessage().contains("SSN_UNIQUE")) {
-                System.out.println("Customer already exists with provided Social Security Number, please double check before retry.");
+            if (rs == null) {
                 return;
             }
-            e1.printStackTrace();
-        }catch (Exception e2) {
-            e2.printStackTrace();
-            System.out.println("There was a problem with this function");
-        }
-    }
 
-    public void deleteCustomer(String customerID) {
-        if (!customerExists(customerID)) {
-            System.out.println("Provided CustomerID is invalid.");
-            return;
-        }
+            if (rs.next()) {
+                fname = rs.getString("firstName");
+                lname = rs.getString("lastName");
+                SSN = rs.getString("SSN");
+                DOB = rs.getString("DOB");
+                return;
+            }
 
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String delete = "Delete FROM Bank.Customer WHERE customerID = '" + customerID + "';";
-
-            statement.executeUpdate(delete);
-
-            System.out.println("Successfully deleted " + customerID + " from the Customer Database.");
-
+            throw new Exception("No Customer found with provided Social Security Number. Please create customer.");
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("There was a problem with this function");
         }
     }
 
-    public void updateCustomerFirstName(String customerID, String firstName) {
-        if (!customerExists(customerID)) {
-            System.out.println("Provided CustomerID is invalid.");
-            return;
-        }
-
+    public Customer(String socialSecurityNum, String firstName, String lastName, String dateOfBirth) {
+        dbConnection = new DBConnection();
         try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String update = "Update Bank.Customer SET firstName = '" + firstName + "' WHERE customerID = '" + customerID + "';";
-
-            statement.executeUpdate(update);
-
-            System.out.println("Successfully updated " + customerID + " first name in the Customer Database.");
-
-        } catch (Exception e) {
-            System.out.println("There was a problem with this function");
-            e.getStackTrace();
+            dbConnection.insert("Customer", "(`SSN`, `firstName`, `lastName`, `DOB`)", "('" + socialSecurityNum + "', '" + firstName + "', '" + lastName + "', '" + dateOfBirth + "')");
+            SSN = socialSecurityNum;
+            fname = firstName;
+            lname = lastName;
+            DOB = dateOfBirth;
+        } catch (SQLIntegrityConstraintViolationException e) {
+            System.out.println("Duplicate SSN found. Please try again with new SSN");
         }
     }
 
-    public void updateCustomerLastName(String customerID, String lastName) {
-        if (!customerExists(customerID)) {
-            System.out.println("Provided CustomerID is invalid.");
-            return;
-        }
-
-        try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
-
-            Statement statement = connection.createStatement();
-
-            String update = "Update Bank.Customer SET lastName = '" + lastName + "' WHERE customerID = '" + customerID + "';";
-
-            statement.executeUpdate(update);
-
-            System.out.println("Successfully updated " + customerID + " last name in the Customer Database.");
-
-        } catch (Exception e) {
-            System.out.println("There was a problem with this function");
-            e.getStackTrace();
-        }
+    public void deleteCustomer() {
+        dbConnection.delete("Customer", "SSN = '" + SSN + "'");
     }
 
-    public void getCustomerInfoByID(String customerID) {
-        if (!customerExists(customerID)) {
-            System.out.println("Provided CustomerID is invalid.");
-            return;
-        }
+    public void updateCustomerFirstName(String firstName) {
+        fname = firstName;
+        dbConnection.update("Customer", "firstName = '" + fname + "'", "SSN = '" + SSN + "'");
+    }
 
+    public void updateCustomerLastName(String lastName) {
+        lname = lastName;
+        dbConnection.update("Customer", "lastName = '" + lname + "'", "SSN = '" + SSN + "'");
+    }
+
+    public boolean customerExists() {
+        return dbConnection.exists("Customer", "SSN = '" + SSN + "'");
+    }
+
+    public void customerInformation() {
+        System.out.println(SSN + " | " + fname + " | " + lname + " | " + DOB);
+    }
+
+    //ACCOUNTS PER CUSTOMER
+
+
+    public void getAllAccountByCustomer(String customerID) {
+        ResultSet rs = dbConnection.select("Accounts", "customerSSN = '" + SSN + "'");
         try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
+            System.out.println("Account Information:");
 
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Customer WHERE customerID = '" + customerID + "';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            while (select.next()) {
-                System.out.println("Customer Information:");
-                System.out.println("Customer ID: " + select.getString("customerID") + " | First Name: " + select.getString("firstName") + " | Last Name: " + select.getString("lastName") + " | SSN: " + select.getString("SSN") + " | DOB: " + select.getString("DOB"));
-                return;
+            while (rs.next()) {
+                System.out.println("Account ID: " + rs.getString("AccountID") + " | Customer SSN: " + SSN + " | Account Create Date: " + rs.getString("createDate") + " | Account Type: " + rs.getString("AccountType") + " | Account Balance: " + rs.getString("Balance"));
             }
-            System.out.println("No results, please try again with different customerID");
-
         } catch (Exception e) {
-            System.out.println("There was a problem with this function");
-            e.getStackTrace();
+            System.out.println("There was an error with that operation");
         }
     }
 
-    public void getCustomerInfoBySSN(String SSN) {
+    public void getAllCheckingAccountsByCustomer(String customerID) {
+        ResultSet rs = dbConnection.select("Accounts", "customerSSN = '" + SSN + "' AND AccountType = 'Chk'");
         try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
+            System.out.println("Account Information:");
 
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Customer WHERE SSN = '" + SSN + "';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            while (select.next()) {
-                System.out.println("Customer Information:");
-                System.out.println("Customer ID: " + select.getString("customerID") + " | First Name: " + select.getString("firstName") + " | Last Name: " + select.getString("lastName") + " | SSN: " + select.getString("SSN") + " | DOB: " + select.getString("DOB"));
-                return;
+            while (rs.next()) {
+                System.out.println("Account ID: " + rs.getString("AccountID") + " | Customer SSN: " + SSN + " | Account Create Date: " + rs.getString("createDate") + " | Account Type: " + rs.getString("AccountType") + " | Account Balance: " + rs.getString("Balance"));
             }
-            System.out.println("No results, please try again with different Social Security Number");
-
         } catch (Exception e) {
-            System.out.println("There was a problem with this function");
-            e.getStackTrace();
+            System.out.println("There was an error with that operation");
         }
     }
 
-    public boolean customerExists(String customerID) {
+    public void getAllSavingsAccountsByCustomer() {
+        ResultSet rs = dbConnection.select("Accounts", "customerSSN = '" + SSN + "' AND AccountType = 'Sav'");
         try {
-            Connection connection = DriverManager.getConnection(url, user, pass);
+            System.out.println("Account Information:");
 
-            Statement statement = connection.createStatement();
-
-            String query = "Select * FROM Bank.Customer WHERE customerID = '" + customerID + "';";
-
-            ResultSet select = statement.executeQuery(query);
-
-            while (select.next()) {
-                return true;
+            while (rs.next()) {
+                System.out.println("Account ID: " + rs.getString("AccountID") + " | Customer SSN: " + SSN + " | Account Create Date: " + rs.getString("createDate") + " | Account Type: " + rs.getString("AccountType") + " | Account Balance: " + rs.getString("Balance"));
             }
-
         } catch (Exception e) {
-            System.out.println("There was a problem with this function");
-            e.getStackTrace();
+            System.out.println("There was an error with that operation");
         }
-
-        return false;
     }
 }
