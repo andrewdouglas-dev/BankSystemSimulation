@@ -7,13 +7,20 @@ public class Customer {
     String SSN;
     String DOB;
 
-    public Customer(String searchValue) {
+    public Customer() {
         dbConnection = new DBConnection();
+    }
+
+    public String customerInfo() {
+        return "SSN: " + SSN + " First Name: " + fname + " Last Name: " + lname + " DOB: " + DOB;
+    }
+
+    public boolean setCustomer(String searchValue) {
         ResultSet rs = dbConnection.select("Customer", "SSN = '" + searchValue + "'");
 
         try {
             if (rs == null) {
-                return;
+                return false;
             }
 
             if (rs.next()) {
@@ -21,25 +28,27 @@ public class Customer {
                 lname = rs.getString("lastName");
                 SSN = rs.getString("SSN");
                 DOB = rs.getString("DOB");
-                return;
+                return true;
             }
 
             throw new Exception("No Customer found with provided Social Security Number. Please create customer.");
         } catch (Exception e) {
-            e.printStackTrace();
+            return false;
         }
     }
 
-    public Customer(String socialSecurityNum, String firstName, String lastName, String dateOfBirth) {
-        dbConnection = new DBConnection();
+    public boolean addCustomer(String socialSecurityNum, String firstName, String lastName, String dateOfBirth) {
         try {
             dbConnection.insert("Customer", "(`SSN`, `firstName`, `lastName`, `DOB`)", "('" + socialSecurityNum + "', '" + firstName + "', '" + lastName + "', '" + dateOfBirth + "')");
             SSN = socialSecurityNum;
             fname = firstName;
             lname = lastName;
             DOB = dateOfBirth;
+
+            return true;
         } catch (SQLIntegrityConstraintViolationException e) {
             System.out.println("Duplicate SSN found. Please try again with new SSN");
+            return false;
         }
     }
 
@@ -61,9 +70,8 @@ public class Customer {
         return dbConnection.exists("Customer", "SSN = '" + SSN + "'");
     }
 
-    public void customerInformation() {
-        System.out.println(SSN + " | " + fname + " | " + lname + " | " + DOB);
-    }
+
+
 
     //ACCOUNTS PER CUSTOMER
 

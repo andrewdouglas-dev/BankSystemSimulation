@@ -10,7 +10,7 @@ public class Transaction {
         dbConnection = new DBConnection();
     }
 
-    public void Deposit(float amount) {
+    public boolean Deposit(float amount) {
 
         DateTimeFormatter formatterLocalDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String dateTime = formatterLocalDateTime.format(LocalDateTime.now());
@@ -21,12 +21,10 @@ public class Transaction {
 
             //Update Account Balance in Accounts DB
             account.updateBalance(amount);
-
-            System.out.println("Successfully deposited to Account: " + account.accountID + ". New balance is: " + account.balance);
+            return true;
 
         } catch (Exception e) {
-            System.out.println("There was a problem with this function");
-            e.getStackTrace();
+            return false;
         }
     }
 
@@ -34,8 +32,8 @@ public class Transaction {
         float bal = account.getAccountBalance();
 
         if (bal < amount) {
-            System.out.println("Insufficient funds, transaction not processed.");
-            return 2;
+            //Insufficient funds, transaction not processed
+            return 1;
         }
 
 
@@ -52,25 +50,28 @@ public class Transaction {
             //Update Account Balance in Accounts DB
             account.updateBalance(amt);
 
-            System.out.println("Successfully withdrew " + amount + " from Account: " + account.accountID + " balance. New balance is: " + account.balance);
-
+            //RETURN SUCCESS CODE 3
             return 3;
 
         } catch (Exception e) {
-            System.out.println("There was a problem with this function");
-            e.getStackTrace();
+            //ERROR RETURN ERROR CODE 2
+            return 2;
         }
-
-        return 4;
     }
 
-    public void Transfer(Account accToTransferTo, float transferAmount) {
+    public int Transfer(Account accToTransferTo, float transferAmount) {
         //Check if both Withdrawal and Deposit Accounts exist
-        if (Withdrawal(transferAmount) != 3) {
-            return;
+        int withdrawalCode = Withdrawal(transferAmount);
+        if (withdrawalCode != 3) {
+            return withdrawalCode;
         }
 
         Transaction depositTrans = new Transaction(accToTransferTo);
-        depositTrans.Deposit(transferAmount);
+        if (depositTrans.Deposit(transferAmount)) {
+            return 3;
+        }
+
+        //ERROR FOUND RETURN ERROR CODE 2
+        return 2;
     }
 }

@@ -11,8 +11,11 @@ public class Account {
     Float balance;
 
 
-    public Account(Customer cus, String accID) {
+    public Account() {
         dbConnection = new DBConnection();
+    }
+
+    public boolean setAccount(Customer cus, String accID) {
         customer = cus;
         accountID = accID;
 
@@ -20,21 +23,24 @@ public class Account {
 
         try {
             if (rs == null) {
-                return;
+                return false;
             }
 
             if (rs.next()) {
                 createDateTime = rs.getString("createDateTime");
                 balance = rs.getFloat("Balance");
                 accountType = rs.getString("AccountType");
+                return true;
             }
+
+            return false;
+
         } catch (Exception e) {
-            e.printStackTrace();
+            return false;
         }
     }
 
-    public Account(Customer cus, String accType, float bal){
-        dbConnection = new DBConnection();
+    public boolean addAccount(Customer cus, String accType, float bal) {
 
         DateTimeFormatter formatterLocalDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String dateTime = formatterLocalDateTime.format(LocalDateTime.now());
@@ -56,13 +62,18 @@ public class Account {
             if (rs.next()) {
                 accountID = rs.getString("AccountID");
             }
+
+            return true;
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return false;
     }
 
-    public void getAccountDetails() {
-        System.out.println(accountID + " | " + customer.SSN + " | " + createDateTime + " | " + accountType + " | " + balance);
+    public String getAccountDetails() {
+        return (accountID + " | " + customer.SSN + " | " + createDateTime + " | " + accountType + " | " + balance);
     }
 
     public float getAccountBalance() {
