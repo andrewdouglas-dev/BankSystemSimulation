@@ -37,7 +37,7 @@ public class Customer {
         }
     }
 
-    public boolean addCustomer(String socialSecurityNum, String firstName, String lastName, String dateOfBirth) {
+    public int addCustomer(String socialSecurityNum, String firstName, String lastName, String dateOfBirth) {
         try {
             dbConnection.insert("Customer", "(`SSN`, `firstName`, `lastName`, `DOB`)", "('" + socialSecurityNum + "', '" + firstName + "', '" + lastName + "', '" + dateOfBirth + "')");
             SSN = socialSecurityNum;
@@ -45,10 +45,13 @@ public class Customer {
             lname = lastName;
             DOB = dateOfBirth;
 
-            return true;
+            return 3;
         } catch (SQLIntegrityConstraintViolationException e) {
-            System.out.println("Duplicate SSN found. Please try again with new SSN");
-            return false;
+            //ERROR CODE 1, SSN ALREADY IN SYSTEM
+            return 1;
+        } catch (Exception e1) {
+            //ERROR CODE 2
+            return 2;
         }
     }
 

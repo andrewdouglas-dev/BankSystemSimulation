@@ -43,6 +43,24 @@ public class MainCardLayout extends JFrame{
     private JLabel InvalidTransferAmount;
     private JLabel SuccessfulTransfer;
     private JLabel InvalidTransfer;
+    private JPanel CreateCustomerPanel;
+    private JTextField AddCustomerSSNField;
+    private JTextField AddCustomerFNameField;
+    private JTextField AddCustomerLNameField;
+    private JTextField AddCustomerDOBField;
+    private JButton AddCustomerSubmit;
+    private JLabel InvalidSSNField;
+    private JLabel AddCustomerError;
+    private JButton CreateCustomer;
+    private JPanel TransactionHistoryPanel;
+    private JPanel AccountTransActionsPanel;
+    private JButton transactionHistoryButton;
+    private JPanel MainActionPanel;
+    private JList TransactionHistoryList;
+    private JButton CreateAccountButton;
+    private JPanel CreateAccountPanel;
+    private JComboBox AccountTypeBox;
+    private JButton CreateAccountDoneButton;
 
     Customer customer;
     Account account;
@@ -58,10 +76,10 @@ public class MainCardLayout extends JFrame{
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (customer.setCustomer(HomeCustomerSSN.getText())) {
-                    MainPanel.removeAll();
-                    MainPanel.add(AccountPanel);
-                    MainPanel.repaint();
-                    MainPanel.revalidate();
+                    MainActionPanel.removeAll();
+                    MainActionPanel.add(AccountPanel);
+                    MainActionPanel.repaint();
+                    MainActionPanel.revalidate();
                 } else {
                     InvalidCustomer.setVisible(true);
                 }
@@ -73,7 +91,12 @@ public class MainCardLayout extends JFrame{
             public void actionPerformed(ActionEvent e) {
                 if (account.setAccount(customer, AccountTextField.getText())) {
                     InvalidAccount.setVisible(false);
-                    toAccInfo();
+                    MainActionPanel.removeAll();
+                    MainActionPanel.add(AccInfoPanel);
+                    AccountInfo.setText(account.getAccountDetails());
+                    TransactionHistoryList.setModel(account.transactionPerAccount());
+                    MainActionPanel.repaint();
+                    MainActionPanel.revalidate();
                 } else {
                     InvalidAccount.setVisible(true);
                 }
@@ -83,29 +106,29 @@ public class MainCardLayout extends JFrame{
         DepositButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                MainPanel.removeAll();
-                MainPanel.add(DepositPanel);
-                MainPanel.repaint();
-                MainPanel.revalidate();
+                AccountTransActionsPanel.removeAll();
+                AccountTransActionsPanel.add(DepositPanel);
+                AccountTransActionsPanel.repaint();
+                AccountTransActionsPanel.revalidate();
             }
         });
         WithdrawalButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                MainPanel.removeAll();
-                MainPanel.add(WithdrawalPanel);
-                MainPanel.repaint();
-                MainPanel.revalidate();
+                AccountTransActionsPanel.removeAll();
+                AccountTransActionsPanel.add(WithdrawalPanel);
+                AccountTransActionsPanel.repaint();
+                AccountTransActionsPanel.revalidate();
             }
         });
 
         TransferButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                MainPanel.removeAll();
-                MainPanel.add(TransferPanel);
-                MainPanel.repaint();
-                MainPanel.revalidate();
+                AccountTransActionsPanel.removeAll();
+                AccountTransActionsPanel.add(TransferPanel);
+                AccountTransActionsPanel.repaint();
+                AccountTransActionsPanel.revalidate();
             }
         });
 
@@ -187,9 +210,11 @@ public class MainCardLayout extends JFrame{
                 account1.setAccount(customer, TransferToAccount.getText());
 
                 if (TransferToAccount.getText().equals(account.accountID)) {
+                    InvalidTransferAmount.setVisible(false);
                     InvalidTransferAccount.setText("Please enter different Account ID than the one currently being used.");
                     InvalidTransferAccount.setVisible(true);
                 } else if (!account1.setAccount(customer, TransferToAccount.getText())) {
+                    InvalidTransferAmount.setVisible(false);
                     InvalidTransferAccount.setText("Account number not found for customer.");
                     InvalidTransferAccount.setVisible(true);
                 } else {
@@ -202,6 +227,7 @@ public class MainCardLayout extends JFrame{
                     } else if (code == 2) {
                         InvalidTransfer.setText("Problem with this function. Please try again.");
                         InvalidTransfer.setVisible(true);
+                        InvalidTransferAmount.setVisible(false);
                     } else {
                         InvalidTransfer.setVisible(false);
                         InvalidTransferAmount.setVisible(false);
@@ -238,14 +264,78 @@ public class MainCardLayout extends JFrame{
                 TransferToAccount.setText("");
             }
         });
+
+        AddCustomerSubmit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int code = customer.addCustomer(AddCustomerSSNField.getText(), AddCustomerFNameField.getText(), AddCustomerLNameField.getText(), AddCustomerDOBField.getText());
+
+                if (code == 1) {
+                    //Proceed to Account Page
+                    InvalidSSNField.setVisible(true);
+                } else if (code == 2) {
+                    InvalidSSNField.setVisible(false);
+                    AddCustomerError.setVisible(true);
+                } else {
+                    InvalidSSNField.setVisible(false);
+                    AddCustomerError.setVisible(false);
+                    MainActionPanel.removeAll();
+                    MainActionPanel.add(AccountPanel);
+                    MainActionPanel.repaint();
+                    MainActionPanel.revalidate();
+                }
+            }
+        });
+
+        CreateCustomer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                MainActionPanel.removeAll();
+                MainActionPanel.add(CreateCustomerPanel);
+                MainActionPanel.repaint();
+                MainActionPanel.revalidate();
+            }
+        });
+        transactionHistoryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                toAccInfo();
+            }
+        });
+
+        CreateAccountButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                MainActionPanel.removeAll();
+                AccountTypeBox.addItem("Checking");
+                AccountTypeBox.addItem("Savings");
+                MainActionPanel.add(CreateAccountPanel);
+                MainActionPanel.repaint();
+                MainActionPanel.revalidate();
+            }
+        });
+
+        CreateAccountDoneButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                account.addAccount(customer, AccountTypeBox.getSelectedItem().toString(), (float)0.00);
+                MainActionPanel.removeAll();
+                MainActionPanel.add(AccInfoPanel);
+                AccountInfo.setText(account.getAccountDetails());
+                TransactionHistoryList.setModel(account.transactionPerAccount());
+                MainActionPanel.repaint();
+                MainActionPanel.revalidate();
+            }
+        });
     }
 
     public void toAccInfo() {
-        MainPanel.removeAll();
-        MainPanel.add(AccInfoPanel);
+        AccountTransActionsPanel.removeAll();
+        AccountTransActionsPanel.add(TransactionHistoryPanel);
         AccountInfo.setText(account.getAccountDetails());
-        MainPanel.repaint();
-        MainPanel.revalidate();
+        TransactionHistoryList.setModel(account.transactionPerAccount());
+        AccountTransActionsPanel.repaint();
+        AccountTransActionsPanel.revalidate();
     }
 
     public void setUpWindow() {
@@ -254,10 +344,12 @@ public class MainCardLayout extends JFrame{
         this.setIconImage(img.getImage());
         this.setVisible(true);
         //this.setContentPane(MainPanel);
-        this.setSize(600,400);
-        this.setResizable(true);
+        this.setSize(900,400);
+        this.setResizable(false);
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setLayout(new BorderLayout());
         this.add(MainPanel, BorderLayout.CENTER);
+        MainPanel.add(MainActionPanel);
+        this.setLocationRelativeTo(null);
     }
 }

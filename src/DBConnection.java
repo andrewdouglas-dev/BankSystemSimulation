@@ -5,7 +5,7 @@ public class DBConnection {
     private final String user = "BankUser";
     private final String pass = "Password123";
 
-    public void insert(String Table, String Parameters, String Values) throws SQLIntegrityConstraintViolationException {
+    public void insert(String Table, String Parameters, String Values) throws SQLException {
         try {
             Connection connection = DriverManager.getConnection(url, user, pass);
 
@@ -20,8 +20,7 @@ public class DBConnection {
                 throw new SQLIntegrityConstraintViolationException("Duplicate PRIMARY key");
             }
         }catch (Exception e2) {
-            e2.printStackTrace();
-            System.out.println("There was a problem with this function");
+            throw e2;
         }
     }
 

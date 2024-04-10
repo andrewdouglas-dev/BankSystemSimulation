@@ -1,6 +1,9 @@
+import javax.swing.*;
 import java.sql.*;
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 
 public class Account {
     DBConnection dbConnection;
@@ -9,6 +12,7 @@ public class Account {
     String accountType;
     String createDateTime;
     Float balance;
+    private final DecimalFormat df = new DecimalFormat("0.00");
 
 
     public Account() {
@@ -73,7 +77,7 @@ public class Account {
     }
 
     public String getAccountDetails() {
-        return (accountID + " | " + customer.SSN + " | " + createDateTime + " | " + accountType + " | " + balance);
+        return ("Account ID: " + accountID + " | SSN: " + customer.SSN + " | Account Type: " + accountType + " | Balance: $" + df.format(balance));
     }
 
     public float getAccountBalance() {
@@ -92,5 +96,30 @@ public class Account {
 
     public void deleteAccount() {
         dbConnection.delete("Accounts", "accountID = '" + accountID + "' and customerSSN = '" + customer.SSN + "'");
+    }
+
+    public DefaultListModel<String> transactionPerAccount() {
+        DefaultListModel<String> temp = new DefaultListModel<>();
+
+        ResultSet rs = dbConnection.select("Transactions", "accountID = '" + accountID + "' ORDER BY transactionsID DESC LIMIT 10");
+
+        try {
+            while (rs.next()) {
+                String type = rs.getString("type");
+                if (type.equals("Deposit")) {
+                    type = "Deposit     ";
+                }
+
+                temp.addElement(rs.getInt("transactionsID") + " | " + rs.getDate("Date") + " | " + type + " | $" + df.format(rs.getFloat("amount")) +"\n");
+            }
+
+            if (temp.isEmpty()) {
+                temp.addElement("No transactions history.");
+            }
+
+        } catch (Exception e) {
+        }
+
+        return temp;
     }
 }
